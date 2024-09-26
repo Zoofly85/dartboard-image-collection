@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dartboard Image Collection</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+        #gallery img { width: 150px; height: 150px; object-fit: cover; }
+        #video { max-width: 100%; }
+        button { margin-top: 10px; padding: 10px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Dartboard Image Collection</h1>
+    <p>Help us collect dartboard images! Capture 30 images of your dartboard from different angles.</p>
+    <video id="video" width="640" height="480" autoplay></video>
+    <br>
+    <button id="capture">Capture Image</button>
+    <p id="status"></p>
+    <div id="gallery"></div>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureButton = document.getElementById('capture');
+        const gallery = document.getElementById('gallery');
+        const status = document.getElementById('status');
+        let imageCounter = 0;
+
+        async function setupCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Error accessing the camera:', error);
+                status.textContent = 'Error: Unable to access the camera. Please ensure you have given camera permissions and are using a supported browser.';
+            }
+        }
+
+        function captureImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const img = document.createElement('img');
+            img.src = canvas.toDataURL('image/jpeg');
+            gallery.appendChild(img);
+            imageCounter++;
+            status.textContent = `Captured ${imageCounter} of 30 images`;
+
+            if (imageCounter >= 30) {
+                captureButton.disabled = true;
+                status.textContent += '. Finished capturing!';
+            }
+        }
+
+        setupCamera();
+        captureButton.addEventListener('click', captureImage);
+    </script>
+</body>
+</html>
