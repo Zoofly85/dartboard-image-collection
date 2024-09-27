@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Camera Dartboard Image Collection</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
         .camera-container { display: flex; justify-content: space-between; margin-bottom: 20px; }
@@ -11,8 +13,7 @@
         #gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
         #gallery img { width: 100px; height: 100px; object-fit: cover; }
         video { width: 100%; }
-        button { margin-top: 10px; padding: 10px; font-size: 16px; }
-        #upload { background-color: #4CAF50; color: white; }
+        button { margin-top: 10px; padding: 10px; font-size: 16px; margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -30,7 +31,8 @@
         </div>
     </div>
     <button id="capture">Capture Images</button>
-    <button id="upload">Upload Images</button>
+    <button id="download" disabled>Download Images</button>
+    <button id="upload">Open Upload Form</button>
     <p id="status"></p>
     <div id="gallery"></div>
 
@@ -41,6 +43,7 @@
             document.getElementById('video3')
         ];
         const captureButton = document.getElementById('capture');
+        const downloadButton = document.getElementById('download');
         const uploadButton = document.getElementById('upload');
         const gallery = document.getElementById('gallery');
         const status = document.getElementById('status');
@@ -73,7 +76,7 @@
 
         async function captureAllImages() {
             captureButton.disabled = true;
-            uploadButton.disabled = true;
+            downloadButton.disabled = true;
             capturedImages = [];
             gallery.innerHTML = '';
 
@@ -94,19 +97,36 @@
             }
 
             captureButton.disabled = false;
-            uploadButton.disabled = false;
-            status.textContent = 'Finished capturing! You can now upload the images.';
+            downloadButton.disabled = false;
+            status.textContent = 'Finished capturing! You can now download the images.';
         }
 
-        function uploadImages() {
+        async function downloadImages() {
+            const zip = new JSZip();
+            capturedImages.forEach((imgData, index) => {
+                const binaryString = atob(imgData.split(',')[1]);
+                const array = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    array[i] = binaryString.charCodeAt(i);
+                }
+                zip.file(`image_${index + 1}.png`, array);
+            });
+
+            const content = await zip.generateAsync({type: "blob"});
+            saveAs(content, "captured_images.zip");
+            status.textContent = 'Images downloaded. You can now upload them to the form.';
+        }
+
+        function openUploadForm() {
             const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSec6uCHNnBwq4qryrwcV4qE0lfIQMxlk5TaJpuzvsG1XgGS2w/viewform?usp=sf_link';
             window.open(formUrl, '_blank');
-            status.textContent = 'Please upload the captured images in the opened Google Form.';
+            status.textContent = 'Please upload the downloaded images in the opened Google Form.';
         }
 
         setupCameras();
         captureButton.addEventListener('click', captureAllImages);
-        uploadButton.addEventListener('click', uploadImages);
+        downloadButton.addEventListener('click', downloadImages);
+        uploadButton.addEventListener('click', openUploadForm);
     </script>
 </body>
 </html>
