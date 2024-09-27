@@ -3,90 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Camera Dartboard Image Collection</title>
+    <title>Dartboard Image Collection</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .camera-container { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .camera { width: 30%; }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         #gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
-        #gallery img { width: 100px; height: 100px; object-fit: cover; }
-        video { width: 100%; }
+        #gallery img { width: 150px; height: 150px; object-fit: cover; }
+        video { width: 100%; max-width: 640px; }
         button { margin-top: 10px; padding: 10px; font-size: 16px; }
     </style>
 </head>
 <body>
-    <h1>Multi-Camera Dartboard Image Collection</h1>
-    <p>Press the button to capture 30 images from each of the three cameras.</p>
-    <div class="camera-container">
-        <div class="camera">
-            <video id="video1" autoplay playsinline></video>
-        </div>
-        <div class="camera">
-            <video id="video2" autoplay playsinline></video>
-        </div>
-        <div class="camera">
-            <video id="video3" autoplay playsinline></video>
-        </div>
-    </div>
-    <button id="capture">Capture Images</button>
+    <h1>Dartboard Image Collection</h1>
+    <p>Capture images of your dartboard and upload them to our collection.</p>
+    <video id="video" autoplay playsinline></video>
+    <br>
+    <button id="capture">Capture Image</button>
+    <button id="upload" style="display: none;">Upload Images</button>
     <p id="status"></p>
     <div id="gallery"></div>
 
     <script>
-        const videos = [
-            document.getElementById('video1'),
-            document.getElementById('video2'),
-            document.getElementById('video3')
-        ];
+        const video = document.getElementById('video');
         const captureButton = document.getElementById('capture');
+        const uploadButton = document.getElementById('upload');
         const gallery = document.getElementById('gallery');
         const status = document.getElementById('status');
         let imageCounter = 0;
-        const totalImages = 90; // 30 images * 3 cameras
+        let capturedImages = [];
 
-        async function setupCameras() {
+        async function setupCamera() {
             try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                
-                for (let i = 0; i < Math.min(3, videoDevices.length); i++) {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { deviceId: { exact: videoDevices[i].deviceId } } 
-                    });
-                    videos[i].srcObject = stream;
-                }
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = stream;
             } catch (error) {
-                console.error('Error accessing the cameras:', error);
-                status.textContent = 'Error: Unable to access all cameras. Please ensure you have given camera permissions and are using a supported browser.';
+                console.error('Error accessing the camera:', error);
+                status.textContent = 'Error: Unable to access the camera. Please ensure you have given camera permissions and are using a supported browser.';
             }
         }
 
-        function captureImage(video) {
+        function captureImage() {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
+            
             const img = document.createElement('img');
             img.src = canvas.toDataURL('image/jpeg');
             gallery.appendChild(img);
+            
+            capturedImages.push(canvas.toDataURL('image/jpeg'));
             imageCounter++;
-            status.textContent = `Captured ${imageCounter} of ${totalImages} images`;
-        }
+            status.textContent = `Captured ${imageCounter} images`;
 
-        async function captureAllImages() {
-            captureButton.disabled = true;
-            for (let i = 0; i < 30; i++) {
-                for (const video of videos) {
-                    captureImage(video);
-                    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between captures
-                }
+            if (imageCounter === 30) {
+                captureButton.disabled = true;
+                uploadButton.style.display = 'inline-block';
+                status.textContent += '. Ready to upload!';
             }
-            status.textContent += '. Finished capturing!';
-            captureButton.disabled = false;
         }
 
-        setupCameras();
-        captureButton.addEventListener('click', captureAllImages);
+        function uploadImages() {
+            const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSec6uCHNnBwq4qryrwcV4qE0lfIQMxlk5TaJpuzvsG1XgGS2w/viewform?usp=sf_link';
+            window.open(formUrl, '_blank');
+            
+            status.textContent = 'Please upload the captured images in the opened Google Form.';
+        }
+
+        setupCamera();
+        captureButton.addEventListener('click', captureImage);
+        uploadButton.addEventListener('click', uploadImages);
     </script>
 </body>
 </html>
