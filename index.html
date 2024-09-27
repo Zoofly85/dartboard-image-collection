@@ -9,7 +9,7 @@
         #gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
         #gallery img { width: 150px; height: 150px; object-fit: cover; }
         video { width: 100%; max-width: 640px; }
-        button { margin-top: 10px; padding: 10px; font-size: 16px; }
+        button { margin-top: 10px; padding: 10px; font-size: 16px; margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -18,7 +18,7 @@
     <video id="video" autoplay playsinline></video>
     <br>
     <button id="capture">Capture Image</button>
-    <button id="upload" style="display: none;">Upload Images</button>
+    <button id="upload">Upload Images</button>
     <p id="status"></p>
     <div id="gallery"></div>
 
@@ -53,13 +53,14 @@
             
             capturedImages.push(canvas.toDataURL('image/jpeg'));
             imageCounter++;
-            status.textContent = `Captured ${imageCounter} images`;
+            status.textContent = `Captured ${imageCounter} image${imageCounter > 1 ? 's' : ''}`;
 
-            if (imageCounter === 30) {
+            if (imageCounter >= 30) {
                 captureButton.disabled = true;
-                uploadButton.style.display = 'inline-block';
-                status.textContent += '. Ready to upload!';
+                status.textContent += '. Maximum images captured!';
             }
+            
+            uploadButton.disabled = false;
         }
 
         function uploadImages() {
@@ -72,6 +73,9 @@
         setupCamera();
         captureButton.addEventListener('click', captureImage);
         uploadButton.addEventListener('click', uploadImages);
+
+        // Initially disable the upload button
+        uploadButton.disabled = true;
     </script>
 </body>
 </html>
